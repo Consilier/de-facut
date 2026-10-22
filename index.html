@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>De făcut</title>
+<meta name="theme-color" content="#1F6F5C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --ink:#18222E; --muted:#5B6878; --line:#D3DBE1;
+  --accent:#1F6F5C; --accent-ink:#FFFFFF; --soft:#E1ECE8; --hi:#B83A26; --mid:#A0650F;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#11171D; --surface:#19212A; --ink:#E5EBF0; --muted:#94A2B1; --line:#2A3540;
+    --accent:#52B596; --accent-ink:#0B1A15; --soft:#1C2C27; --hi:#F08670; --mid:#E2AA4D;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11171D; --surface:#19212A; --ink:#E5EBF0; --muted:#94A2B1; --line:#2A3540;
+  --accent:#52B596; --accent-ink:#0B1A15; --soft:#1C2C27; --hi:#F08670; --mid:#E2AA4D;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+
+header{margin:4px 0 18px}
+.today{color:var(--muted);font-size:.95rem;margin:0}
+h1{font-size:2.1rem;line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:2px 0 6px}
+.summary{margin:0;font-size:1rem}
+.summary .late{color:var(--hi);font-weight:600}
+.status{margin:8px 0 0;font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.status.ok::before{background:var(--accent)}
+.status.warn::before{background:var(--mid)}
+
+.add{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:18px}
+.add-main{display:flex;gap:8px}
+.add-main input{flex:1;min-width:0;border:0;background:transparent;font-size:1.05rem;padding:8px 4px}
+.add-main input:focus-visible{outline:none}
+.add:focus-within{border-color:var(--accent)}
+.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:8px 16px;font-weight:600;cursor:pointer}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);align-items:end}
+.field{display:flex;flex-direction:column;gap:2px;font-size:.78rem;color:var(--muted)}
+.field input,.field select,.field textarea{font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px}
+.field.list input{width:9.5rem}
+.quick{display:flex;gap:4px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:.9rem;cursor:pointer;min-height:36px}
+.chip[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:10px}
+.tabs button{flex:1;min-width:0;border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:500;cursor:pointer;color:var(--muted);font-size:.94rem}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.tabs .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:4px;font-weight:500}
+.lists{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.lists::-webkit-scrollbar{display:none}
+.lists .chip{white-space:nowrap;background:transparent}
+
+h3{font-size:.85rem;font-weight:600;color:var(--muted);margin:18px 0 6px;padding:0 4px}
+h3.late{color:var(--hi)}
+ul{list-style:none;margin:0;padding:0}
+.task{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid transparent;border-radius:10px;padding:10px 10px 10px 8px;margin-bottom:6px}
+:root{--yel:#BE9C0C;--blu:#3D74BD}
+.task.c-red{border-left-color:var(--hi);background:color-mix(in srgb,var(--hi) 13%,var(--surface))}
+.task.c-amb{border-left-color:var(--mid);background:color-mix(in srgb,var(--mid) 15%,var(--surface))}
+.task.c-yel{border-left-color:var(--yel);background:color-mix(in srgb,var(--yel) 14%,var(--surface))}
+.task.c-blu{border-left-color:var(--blu);background:color-mix(in srgb,var(--blu) 12%,var(--surface))}
+.done-btn{flex:none;align-self:center;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:8px;padding:5px 10px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;min-height:32px}
+.done-btn svg{width:14px;height:14px;flex:none}
+.done-btn:hover{background:var(--accent);color:var(--accent-ink)}
+.task.done .done-btn{border-color:var(--line);color:var(--muted);font-weight:500}
+.task.done .done-btn:hover{background:var(--bg);color:var(--ink)}
+.actions{flex-wrap:wrap}
+.colorbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 4px;font-size:.82rem;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:4px 10px;cursor:pointer;color:var(--muted);font-size:.82rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 10px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+@media (max-width:460px){
+  .wrap{padding:12px 10px 32px}
+  header{margin:0 0 12px}
+  .add{padding:8px}
+  .add:not(:focus-within) .opts{display:none}
+}
+.check{flex:none;width:26px;height:26px;margin-top:1px;border-radius:50%;border:2px solid var(--muted);background:transparent;cursor:pointer;display:grid;place-items:center;padding:0}
+.check svg{width:14px;height:14px;opacity:0}
+.task.done .check{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.task.done .check svg{opacity:1}
+.body{flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:0;cursor:pointer}
+.title{display:block;word-wrap:break-word;overflow-wrap:anywhere}
+.task.done .title{text-decoration:line-through;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px;font-size:.82rem;color:var(--muted)}
+.meta .tag{background:var(--soft);color:var(--accent);border-radius:5px;padding:0 6px;font-weight:500}
+.meta .overdue{color:var(--hi);font-weight:600}
+.meta .pr2{color:var(--hi)}
+.meta .pr1{color:var(--mid)}
+.empty{color:var(--muted);text-align:center;padding:28px 12px}
+.prog{display:flex;align-items:center;gap:8px;margin-top:8px}
+.bar{position:relative;flex:1;height:8px;border-radius:4px;background:color-mix(in srgb,var(--ink) 11%,transparent)}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent);max-width:100%}
+.prog.behind .fill{background:var(--hi)}
+.mark{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--ink);opacity:.6;border-radius:1px}
+.pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:.92rem;min-width:3.2ch;text-align:right}
+#projBox{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+#projBox[hidden]{display:none}
+.pbig{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.steps{display:flex;flex-direction:column;gap:4px;max-height:38vh;overflow:auto}
+.step{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.step label{flex:1;display:flex;gap:8px;align-items:center;cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.step input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.step.ok span{text-decoration:line-through;color:var(--muted)}
+.step .x{border:0;background:transparent;color:var(--muted);font-size:1.25rem;line-height:1;cursor:pointer;padding:2px 6px}
+.step-add{display:flex;gap:8px}
+.step-add input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px}
+#pManual{width:100%;accent-color:var(--accent)}
+@media (max-width:380px){.tabs .n{display:none}}
+.footer-actions{display:flex;justify-content:flex-end;margin-top:12px}
+.danger{background:transparent;border:1px solid var(--hi);color:var(--hi);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:500}
+.danger.armed{background:var(--hi);color:var(--surface)}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--surface);color:var(--ink);width:min(520px,calc(100% - 24px));max-height:calc(100% - 24px)}
+dialog::backdrop{background:rgba(10,16,22,.45)}
+dialog form{padding:18px;display:flex;flex-direction:column;gap:12px}
+dialog h2{margin:0;font-size:1.2rem}
+dialog .field{font-size:.82rem}
+dialog .field input,dialog .field select,dialog .field textarea{width:100%}
+dialog textarea{resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:8px;align-items:center;margin-top:4px}
+.actions .sp{flex:1}
+
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:.9rem;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+fieldset[disabled]{opacity:.55}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+@media (max-width:420px){
+  h1{font-size:1.8rem}
+  .field.list input{width:7.5rem}
+}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.sm{padding:5px 10px;font-size:.85rem;border-radius:8px;min-height:32px}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+.hint.err{color:var(--hi)}
+.hint.ok{color:var(--accent)}
+dialog hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
+#ioText{width:100%;font:12px/1.4 ui-monospace,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--ink);resize:vertical}
+.filebtn{display:inline-flex;align-items:center;cursor:pointer}
+#pipNote{max-width:520px;margin:15vh auto 0;padding:24px;text-align:center;color:var(--muted)}
+#pipNote p{margin:0 0 14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="pipNote" hidden><p>Lista e deschisă în fereastra plutitoare.</p><button type="button" class="ghost" id="pipBack">Adu-o înapoi aici</button></div>
+<div id="app">
+<div class="wrap">
+  <header>
+    <p class="today" id="today"></p>
+    <div class="hrow">
+      <h1>De făcut</h1>
+      <div class="tools">
+        <button type="button" class="ghost sm" id="pipBtn" hidden>Fereastră plutitoare</button>
+        <button type="button" class="ghost sm" id="setBtn">Setări</button>
+      </div>
+    </div>
+    <p class="summary" id="summary"></p>
+    <p class="status warn" id="status">Se încarcă…</p>
+  </header>
+
+  <form class="add" id="add" autocomplete="off">
+    <fieldset id="addSet">
+      <div class="add-main">
+        <input id="title" placeholder="Ce ai de făcut?" maxlength="300" required aria-label="Sarcină nouă">
+        <button type="submit" class="primary">Adaugă</button>
+      </div>
+      <div class="opts">
+        <label class="field list"><span>Listă</span><input id="list" list="listNames" placeholder="ex. CU, CAU" maxlength="40"></label>
+        <label class="field"><span>Termen</span><input id="due" type="date"></label>
+        <div class="quick">
+          <button type="button" class="chip" data-quick="0" aria-pressed="false">Azi</button>
+          <button type="button" class="chip" data-quick="1" aria-pressed="false">Mâine</button>
+        </div>
+        <label class="field"><span>Prioritate</span>
+          <select id="prio"><option value="0">Normală</option><option value="1">Importantă</option><option value="2">Urgentă</option></select>
+        </label>
+        <button type="button" class="chip" id="isProj" aria-pressed="false">Proiect de durată</button>
+      </div>
+    </fieldset>
+  </form>
+  <datalist id="listNames"></datalist>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-view="open" aria-selected="true">De făcut<span class="n" id="nOpen"></span></button>
+    <button role="tab" data-view="today" aria-selected="false">Azi<span class="n" id="nToday"></span></button>
+    <button role="tab" data-view="projects" aria-selected="false">Proiecte<span class="n" id="nProj"></span></button>
+    <button role="tab" data-view="done" aria-selected="false">Realizate<span class="n" id="nDone"></span></button>
+  </div>
+  <div class="lists" id="lists"></div>
+  <div class="colorbar" id="colorbar"></div>
+  <main id="out"></main>
+</div>
+
+<dialog id="edit">
+  <form method="dialog" id="editForm">
+    <h2>Editează sarcina</h2>
+    <label class="field"><span>Titlu</span><input name="title" required maxlength="300"></label>
+    <label class="field"><span>Notă</span><textarea name="note" rows="3" maxlength="4000"></textarea></label>
+    <div class="row2">
+      <label class="field"><span>Listă</span><input name="list" list="listNames" maxlength="40"></label>
+      <label class="field"><span>Termen</span><input name="due" type="date"></label>
+    </div>
+    <div class="row2">
+      <label class="field"><span>Prioritate</span>
+        <select name="prio"><option value="0">Normală</option><option value="1">Importantă</option><option value="2">Urgentă</option></select>
+      </label>
+      <label class="field"><span>Tip</span>
+        <select name="kind"><option value="task">Sarcină</option><option value="project">Proiect de durată</option></select>
+      </label>
+    </div>
+    <div id="projBox" hidden>
+      <div class="row2">
+        <label class="field"><span>Început</span><input name="start" type="date"></label>
+        <div class="field"><span>Realizat</span><span class="pbig" id="pPct">0%</span></div>
+      </div>
+      <div class="field"><span>Etape</span></div>
+      <ul class="steps" id="steps"></ul>
+      <div class="step-add"><input id="stepNew" placeholder="Adaugă o etapă" maxlength="200" aria-label="Etapă nouă"><button type="button" class="ghost" id="stepAdd">Adaugă</button></div>
+      <label class="field" id="manualBox"><span>Fără etape? Setează procentul manual</span><input type="range" min="0" max="100" step="5" id="pManual"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="danger" id="delBtn">Șterge</button>
+      <button type="button" class="ghost" id="doneBtn">Realizat</button>
+      <span class="sp"></span>
+      <button value="cancel" class="ghost" formnovalidate>Renunță</button>
+      <button value="save" class="primary" id="saveBtn">Salvează</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="settings">
+  <form method="dialog" id="setForm" autocomplete="off">
+    <h2>Sincronizare prin GitHub</h2>
+    <p class="hint">Sarcinile se salvează într-un fișier JSON dintr-un repo privat. Tokenul rămâne doar în browserul acestui dispozitiv.</p>
+    <div class="row2">
+      <label class="field"><span>Utilizator GitHub</span><input name="owner" required spellcheck="false" autocapitalize="off"></label>
+      <label class="field"><span>Repo cu date (privat)</span><input name="repo" required spellcheck="false" autocapitalize="off"></label>
+    </div>
+    <div class="row2">
+      <label class="field"><span>Ramură</span><input name="branch" required spellcheck="false" autocapitalize="off"></label>
+      <label class="field"><span>Fișier</span><input name="path" required spellcheck="false" autocapitalize="off"></label>
+    </div>
+    <label class="field"><span>Token fine-grained (Contents: Read and write)</span><input name="token" type="password" spellcheck="false" autocapitalize="off" placeholder="github_pat_…"></label>
+    <p class="hint" id="setMsg" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" class="ghost" id="testBtn">Testează</button>
+      <button type="button" class="danger" id="unlinkBtn">Deconectează</button>
+      <span class="sp"></span>
+      <button value="cancel" class="ghost" formnovalidate>Închide</button>
+      <button value="save" class="primary">Salvează</button>
+    </div>
+    <hr>
+    <h3>Import și copie de siguranță</h3>
+    <p class="hint">Lipește aici exportul din versiunea veche sau un fișier JSON salvat anterior. „Afișează exportul” pune aici toate sarcinile, ca să le poți copia.</p>
+    <textarea id="ioText" rows="5" spellcheck="false" aria-label="Date JSON"></textarea>
+    <div class="actions">
+      <button type="button" class="ghost" id="exportBtn">Afișează exportul</button>
+      <label class="ghost filebtn">Alege fișier<input type="file" id="ioFile" accept=".json,application/json" hidden></label>
+      <span class="sp"></span>
+      <button type="button" class="primary" id="importBtn">Importă</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  let DOC = document;
+  const $ = s => DOC.querySelector(s);
+  let tasks = [], mode = "local", readOnly = false;
+  let view = "open", activeList = "", editingId = null;
+  let colorMode = "prio";
+  try { colorMode = localStorage.getItem("de-facut:colors") === "due" ? "due" : "prio"; } catch(e){}
+
+  function h(tag, attrs, ...kids){
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})){
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()){ if (c == null || c === false) continue; el.append(c.nodeType ? c : String(c)); }
+    return el;
+  }
+  const pad = n => String(n).padStart(2, "0");
+  const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  function diff(a, b){ return Math.round((Date.UTC(...ymdParts(b)) - Date.UTC(...ymdParts(a))) / 864e5); }
+  function ymdParts(s){ const [y, m, d] = s.split("-").map(Number); return [y, m - 1, d]; }
+  function nr(n, one, many){
+    if (n === 1) return "1 " + one;
+    const r = n % 100;
+    return n + ((n > 0 && (r === 0 || r >= 20)) ? " de " : " ") + many;
+  }
+  const fmtLong = new Intl.DateTimeFormat("ro-RO", {weekday:"long", day:"numeric", month:"long"});
+  const fmtShort = new Intl.DateTimeFormat("ro-RO", {day:"numeric", month:"short"});
+  const fmtYear = new Intl.DateTimeFormat("ro-RO", {day:"numeric", month:"short", year:"numeric"});
+  const fmtDay = new Intl.DateTimeFormat("ro-RO", {weekday:"long"});
+
+  function dueLabel(due, today){
+    const d = diff(today, due);
+    if (d === 0) return "azi";
+    if (d === 1) return "mâine";
+    if (d === -1) return "ieri";
+    if (d < 0) return "acum " + nr(-d, "zi", "zile");
+    if (d < 7) return fmtDay.format(parse(due));
+    const dt = parse(due);
+    return (dt.getFullYear() === new Date().getFullYear() ? fmtShort : fmtYear).format(dt);
+  }
+
+  function toast(msg){
+    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 3500);
+  }
+  function setStatus(text, cls){ const s = $("#status"); s.textContent = text; s.className = "status " + cls; }
+
+  /* ---------- storage: local + GitHub ---------- */
+  const LS_STATE = "sarcini:state", LS_CFG = "sarcini:github";
+  function readLS(key){ try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
+  function writeLS(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
+  function delLS(key){ try { localStorage.removeItem(key); } catch(e){} }
+  function newId(){ return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  let tomb = {}, dirty = false, editVer = 0;
+  let cfg = readLS(LS_CFG);
+
+  function saveState(){ writeLS(LS_STATE, {tasks, tomb, dirty}); }
+  function loadState(){
+    const st = readLS(LS_STATE);
+    if (st){ tasks = Array.isArray(st.tasks) ? st.tasks : []; tomb = st.tomb || {}; dirty = !!st.dirty; }
+  }
+  function touch(){ dirty = true; editVer++; saveState(); render(); scheduleSync(900); }
+
+  function createTask(t){ t.updated = Date.now(); tasks.push(t); touch(); }
+  function patchTask(id, patch){
+    const t = tasks.find(x => x.id === id); if (!t) return;
+    Object.assign(t, patch, {updated: Date.now()}); touch();
+  }
+  function removeMany(ids){
+    const now = Date.now(); ids.forEach(id => { tomb[id] = now; });
+    tasks = tasks.filter(t => !ids.includes(t.id)); touch();
+  }
+  function removeTask(id){ removeMany([id]); }
+
+  function merge(a, b){
+    const tm = Object.assign({}, a.tomb || {});
+    for (const [id, ts] of Object.entries(b.tomb || {})) if (!(tm[id] >= ts)) tm[id] = ts;
+    const byId = new Map();
+    for (const t of [...(a.tasks || []), ...(b.tasks || [])]){
+      if (!t || !t.id) continue;
+      const cur = byId.get(t.id);
+      if (!cur || (t.updated || 0) > (cur.updated || 0)) byId.set(t.id, t);
+    }
+    const out = [];
+    for (const t of byId.values()){ const d = tm[t.id]; if (d == null || (t.updated || 0) > d) out.push(t); }
+    const cutoff = Date.now() - 90 * 864e5;
+    for (const id of Object.keys(tm)) if (tm[id] < cutoff) delete tm[id];
+    out.sort((x, y) => (x.created || 0) - (y.created || 0) || (x.id < y.id ? -1 : 1));
+    return {tasks: out, tomb: tm};
+  }
+  function stable(v){
+    if (Array.isArray(v)) return "[" + v.map(stable).join(",") + "]";
+    if (v && typeof v === "object") return "{" + Object.keys(v).filter(k => v[k] !== undefined).sort()
+      .map(k => JSON.stringify(k) + ":" + stable(v[k])).join(",") + "}";
+    return JSON.stringify(v === undefined ? null : v);
+  }
+  const canon = d => stable({tasks: [...d.tasks].sort((x, y) => x.id < y.id ? -1 : 1), tomb: d.tomb});
+
+  /* GitHub Contents API */
+  const API = "https://api.github.com";
+  class GhError extends Error { constructor(status, msg){ super(msg); this.status = status; } }
+  function ghHeaders(c){ return {"Authorization": "Bearer " + c.token, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}; }
+  function repoUrl(c){ return API + "/repos/" + encodeURIComponent(c.owner) + "/" + encodeURIComponent(c.repo); }
+  function contentsUrl(c){ return repoUrl(c) + "/contents/" + c.path.split("/").filter(Boolean).map(encodeURIComponent).join("/"); }
+  function b64ToUtf8(b64){ const bin = atob(b64.replace(/\s/g, "")); return new TextDecoder().decode(Uint8Array.from(bin, ch => ch.charCodeAt(0))); }
+  function utf8ToB64(str){
+    const bytes = new TextEncoder().encode(str); let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  async function errOf(r){ let m = ""; try { m = (await r.json()).message || ""; } catch(e){} return new GhError(r.status, m); }
+  function normalize(d){ return {tasks: Array.isArray(d && d.tasks) ? d.tasks : [], tomb: (d && d.tomb) || {}}; }
+
+  async function ghGet(c){
+    const url = contentsUrl(c) + "?ref=" + encodeURIComponent(c.branch);
+    const r = await fetch(url, {headers: ghHeaders(c), cache: "no-store"});
+    if (r.status === 404) return {data: {tasks: [], tomb: {}}, sha: null, exists: false};
+    if (!r.ok) throw await errOf(r);
+    const j = await r.json();
+    let text;
+    if (j.encoding === "base64" && j.content) text = b64ToUtf8(j.content);
+    else if (!j.size) text = "{}";
+    else {
+      const r2 = await fetch(url, {headers: Object.assign(ghHeaders(c), {"Accept": "application/vnd.github.raw+json"}), cache: "no-store"});
+      if (!r2.ok) throw await errOf(r2);
+      text = await r2.text();
+    }
+    let data;
+    try { data = JSON.parse(text || "{}"); } catch(e){ throw new GhError(0, "Fișierul de date din repo nu e JSON valid."); }
+    return {data: normalize(data), sha: j.sha, exists: true};
+  }
+  async function ghPut(c, data, sha){
+    const body = {
+      message: "Actualizare sarcini",
+      content: utf8ToB64(JSON.stringify({app: "de-facut", version: 1, saved: new Date().toISOString(), tasks: data.tasks, tomb: data.tomb}, null, 1)),
+      branch: c.branch
+    };
+    if (sha) body.sha = sha;
+    const r = await fetch(contentsUrl(c), {method: "PUT", headers: Object.assign(ghHeaders(c), {"Content-Type": "application/json"}), body: JSON.stringify(body)});
+    if (!r.ok) throw await errOf(r);
+    return (await r.json()).content.sha;
+  }
+
+  function ghMessage(e){
+    if (!e || e.status === undefined) return "Fără conexiune la GitHub. Modificările rămân salvate aici și se trimit când revine rețeaua.";
+    if (e.status === 401) return "Tokenul e invalid sau a expirat. Pune unul nou în Setări.";
+    if (e.status === 403) return /rate limit/i.test(e.message) ? "Limita de cereri GitHub a fost atinsă. Reîncerc în câteva minute."
+      : "Acces refuzat. Tokenul trebuie să aibă Contents: Read and write pe repo-ul de date.";
+    if (e.status === 404) return "Repo-ul nu a fost găsit sau tokenul nu are acces la el. Verifică Setări.";
+    if (e.status === 0) return e.message;
+    return "Eroare GitHub (" + e.status + (e.message ? ": " + e.message : "") + ").";
+  }
+
+  let syncing = false, again = false, syncTimer = null, lastSync = 0;
+  function scheduleSync(ms){ if (mode !== "sync") return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, ms); }
+  const hhmm = () => { const d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+
+  async function sync(){
+    if (mode !== "sync" || !cfg) return;
+    if (syncing){ again = true; return; }
+    syncing = true; clearTimeout(syncTimer);
+    setStatus("Se sincronizează…", "warn");
+    let ok = false;
+    try {
+      for (let attempt = 0; attempt < 4 && !ok; attempt++){
+        const rem = await ghGet(cfg);
+        const ver = editVer;
+        const merged = merge({tasks, tomb}, rem.data);
+        if (!rem.exists || canon(merged) !== canon(rem.data)){
+          try { await ghPut(cfg, merged, rem.sha); }
+          catch(e){ if (e.status === 409 || e.status === 422) continue; throw e; }
+        }
+        const cur = merge({tasks, tomb}, merged);
+        tasks = cur.tasks; tomb = cur.tomb;
+        if (editVer === ver) dirty = false;
+        saveState(); render(); refreshDialog();
+        ok = true; lastSync = Date.now();
+        setStatus("Sincronizat cu GitHub la " + hhmm(), "ok");
+      }
+      if (!ok){ setStatus("Conflict de salvare repetat. Reîncerc în curând.", "warn"); again = true; }
+    } catch(e){
+      setStatus(ghMessage(e), "warn");
+      if (e.status === undefined || e.status === 403 || e.status >= 500) setTimeout(() => scheduleSync(0), 45000);
+    } finally {
+      syncing = false;
+      if (again){ again = false; scheduleSync(1500); }
+    }
+  }
+  function refreshDialog(){ const d = $("#edit"); if (d && d.open) renderSteps(); }
+
+  /* ---------- render ---------- */
+  function progress(t){
+    if (t.done) return 100;
+    const s = t.steps || [];
+    if (s.length) return Math.round(100 * s.filter(x => x.done).length / s.length);
+    return Math.max(0, Math.min(100, +t.progress || 0));
+  }
+  function expected(t, today){
+    if (!t.start || !t.due || t.due <= t.start) return null;
+    const total = diff(t.start, t.due), el = diff(t.start, today);
+    return Math.max(0, Math.min(100, Math.round(100 * el / total)));
+  }
+
+  function sortOpen(a, b){
+    const da = a.due || "9999-99-99", dbb = b.due || "9999-99-99";
+    if (da !== dbb) return da < dbb ? -1 : 1;
+    if ((b.prio || 0) !== (a.prio || 0)) return (b.prio || 0) - (a.prio || 0);
+    return (a.created || 0) - (b.created || 0);
+  }
+
+  function colorClass(t, today){
+    if (t.done) return "";
+    if (colorMode === "prio") return t.prio == 2 ? " c-red" : t.prio == 1 ? " c-amb" : "";
+    if (!t.due) return "";
+    const d = diff(today, t.due);
+    return d < 0 ? " c-red" : d === 0 ? " c-amb" : d === 1 ? " c-yel" : d < 7 ? " c-blu" : "";
+  }
+
+  function row(t, today){
+    const meta = h("span", {class:"meta"});
+    if (t.list) meta.append(h("span", {class:"tag"}, t.list));
+    if (t.due){
+      const late = !t.done && t.due < today;
+      meta.append(h("span", {class: late ? "overdue" : null}, (late ? "termen " : "") + dueLabel(t.due, today)));
+    }
+    if (t.prio == 2) meta.append(h("span", {class:"pr2"}, "urgentă"));
+    else if (t.prio == 1) meta.append(h("span", {class:"pr1"}, "importantă"));
+    if (t.note) meta.append(h("span", null, "are notă"));
+    let prog = null;
+    if (t.kind === "project"){
+      const p = progress(t), steps = t.steps || [], exp = t.done ? null : expected(t, today);
+      const behind = exp != null && p < exp - 10;
+      prog = h("span", {class: "prog" + (behind ? " behind" : "")},
+        h("span", {class:"bar"},
+          h("span", {class:"fill", style:"width:" + p + "%"}),
+          exp != null ? h("span", {class:"mark", style:"left:" + exp + "%", title:"Ritmul planificat pentru azi: " + exp + "%"}) : null),
+        h("span", {class:"pct"}, p + "%"));
+      meta.append(h("span", null, steps.length ? steps.filter(s => s.done).length + " din " + nr(steps.length, "etapă", "etape") : "proiect"));
+      if (behind) meta.append(h("span", {class:"overdue"}, "în urmă, ritmul cere " + exp + "%"));
+      else if (exp != null && p >= exp + 10) meta.append(h("span", null, "înaintea planului"));
+    }
+    const btn = h("button", {class:"done-btn", type:"button", hidden: readOnly,
+      "aria-label": (t.done ? "Redeschide: " : "Marchează ca realizat: ") + t.title,
+      onclick: () => {
+        const nowDone = !t.done;
+        patchTask(t.id, nowDone ? {done:true, doneAt:Date.now()} : {done:false, doneAt:null});
+        if (nowDone) toast("Realizat: " + t.title);
+      }
+    });
+    btn.innerHTML = t.done
+      ? '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h7a3.5 3.5 0 010 7H6"/><path d="M5.5 2.5L3 5l2.5 2.5"/></svg>'
+      : '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+    btn.append(t.done ? "Redeschide" : "Realizat");
+    return h("li", {class: "task" + colorClass(t, today) + (t.done ? " done" : "")},
+      h("button", {class:"body", type:"button", onclick: () => openEdit(t.id)},
+        h("span", {class:"title"}, t.title),
+        meta.childNodes.length ? meta : null, prog),
+      btn
+    );
+  }
+
+  function group(title, items, today, late){
+    if (!items.length) return null;
+    return [h("h3", {class: late ? "late" : null}, title + " (" + items.length + ")"),
+            h("ul", null, items.map(t => row(t, today)))];
+  }
+
+  function render(){
+    const now = new Date(), today = ymd(now), tomorrow = ymd(addDays(now, 1));
+    $("#today").textContent = fmtLong.format(now);
+
+    const lists = [...new Set(tasks.map(t => t.list).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ro"));
+    if (activeList && !lists.includes(activeList)) activeList = "";
+    $("#listNames").replaceChildren(...lists.map(l => h("option", {value: l})));
+
+    const inList = t => !activeList || t.list === activeList;
+    const open = tasks.filter(t => !t.done && inList(t)).sort(sortOpen);
+    const done = tasks.filter(t => t.done && inList(t)).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+    const late = open.filter(t => t.due && t.due < today);
+    const forToday = open.filter(t => t.due === today);
+
+    const allOpen = tasks.filter(t => !t.done);
+    const allLate = allOpen.filter(t => t.due && t.due < today).length;
+    const allToday = allOpen.filter(t => t.due === today).length;
+    const sum = $("#summary"); sum.replaceChildren();
+    if (!allOpen.length) sum.textContent = "Nimic deschis. Liber.";
+    else {
+      sum.append(nr(allOpen.length, "sarcină deschisă", "sarcini deschise"));
+      if (allToday) sum.append(", " + allToday + " pentru azi");
+      if (allLate) { sum.append(", "); sum.append(h("span", {class:"late"}, nr(allLate, "întârziată", "întârziate"))); }
+    }
+
+    $("#nOpen").textContent = open.length || "";
+    $("#nToday").textContent = (late.length + forToday.length) || "";
+    $("#nDone").textContent = done.length || "";
+    const projects = open.filter(t => t.kind === "project");
+    $("#nProj").textContent = projects.length || "";
+    DOC.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === view)));
+
+    const lc = $("#lists"); lc.replaceChildren();
+    if (lists.length){
+      const mk = (label, val) => h("button", {class:"chip", type:"button", "aria-pressed": String(activeList === val),
+        onclick: () => { activeList = val; $("#list").value = val; render(); }}, label);
+      lc.append(mk("Toate listele", ""), ...lists.map(l => mk(l, l)));
+    }
+
+    const segBtn = (label, val) => h("button", {type:"button", "aria-pressed": String(colorMode === val),
+      onclick: () => { colorMode = val; try { localStorage.setItem("de-facut:colors", val); } catch(e){} render(); }}, label);
+    const leg = colorMode === "prio"
+      ? [["var(--hi)", "urgentă"], ["var(--mid)", "importantă"]]
+      : [["var(--hi)", "întârziată"], ["var(--mid)", "azi"], ["var(--yel)", "mâine"], ["var(--blu)", "în 7 zile"]];
+    $("#colorbar").replaceChildren(
+      h("span", null, "Culori după"),
+      h("span", {class:"seg"}, segBtn("prioritate", "prio"), segBtn("termen", "due")),
+      h("span", {class:"legend"}, leg.map(([c, l]) => h("span", null, h("i", {style:"background:" + c}), l))));
+
+    $("#addSet").disabled = readOnly;
+    const out = $("#out"); out.replaceChildren();
+    const scope = activeList ? " în lista " + activeList : "";
+
+    if (view === "open"){
+      if (!open.length) { out.append(h("p", {class:"empty"}, "Nimic de făcut" + scope + ". Adaugă o sarcină mai sus.")); return; }
+      out.append(...[
+        group("Întârziate", late, today, true),
+        group("Azi", forToday, today),
+        group("Mâine", open.filter(t => t.due === tomorrow), today),
+        group("Mai târziu", open.filter(t => t.due && t.due > tomorrow), today),
+        group("Fără termen", open.filter(t => !t.due), today)
+      ].flat().filter(Boolean));
+    } else if (view === "projects"){
+      if (!projects.length) { out.append(h("p", {class:"empty"}, "Niciun proiect în lucru" + scope + ". Apasă Proiect de durată când adaugi o sarcină nouă.")); return; }
+      out.append(...[group("În lucru", projects, today)].flat().filter(Boolean));
+    } else if (view === "today"){
+      if (!late.length && !forToday.length) { out.append(h("p", {class:"empty"}, "Nimic programat pentru azi" + scope + ".")); return; }
+      out.append(...[group("Întârziate", late, today, true), group("Azi", forToday, today)].flat().filter(Boolean));
+    } else {
+      if (!done.length) { out.append(h("p", {class:"empty"}, "Nicio sarcină realizată încă" + scope + ".")); return; }
+      out.append(h("ul", {style:"margin-top:12px"}, done.map(t => row(t, today))));
+      if (!readOnly){
+        const btn = h("button", {class:"danger", type:"button"}, "Șterge sarcinile realizate");
+        btn.addEventListener("click", async () => {
+          if (!btn.classList.contains("armed")){
+            btn.classList.add("armed"); btn.textContent = "Confirmă: șterge " + nr(done.length, "sarcină", "sarcini");
+            setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Șterge sarcinile realizate"; }, 4000);
+            return;
+          }
+          const ids = done.map(t => t.id);
+          removeMany(ids);
+          toast("Am șters " + nr(ids.length, "sarcină", "sarcini") + ".");
+        });
+        out.append(h("div", {class:"footer-actions"}, btn));
+      }
+    }
+  }
+
+  /* ---------- add form ---------- */
+  function syncQuick(){
+    const v = $("#due").value, now = new Date();
+    DOC.querySelectorAll("[data-quick]").forEach(b =>
+      b.setAttribute("aria-pressed", String(v !== "" && v === ymd(addDays(now, +b.dataset.quick)))));
+  }
+  document.querySelectorAll("[data-quick]").forEach(b => b.addEventListener("click", () => {
+    const val = ymd(addDays(new Date(), +b.dataset.quick));
+    $("#due").value = $("#due").value === val ? "" : val; syncQuick();
+  }));
+  $("#due").addEventListener("input", syncQuick);
+
+  $("#add").addEventListener("submit", e => {
+    e.preventDefault();
+    if (readOnly) return;
+    const title = $("#title").value.trim(); if (!title) return;
+    const isProj = $("#isProj").getAttribute("aria-pressed") === "true";
+    const id = newId();
+    const t = {id, title, note: "", list: $("#list").value.trim(), due: $("#due").value || "",
+      prio: +$("#prio").value, done: false, doneAt: null, created: Date.now()};
+    if (isProj) Object.assign(t, {kind: "project", start: ymd(new Date()), steps: [], progress: 0});
+    createTask(t);
+    $("#title").value = ""; $("#due").value = ""; $("#prio").value = "0"; syncQuick();
+    $("#isProj").setAttribute("aria-pressed", "false");
+    if (isProj){ openEdit(id); $("#stepNew").focus(); }
+    else $("#title").focus();
+  });
+  $("#isProj").addEventListener("click", e => {
+    const b = e.currentTarget; b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"));
+  });
+
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { view = b.dataset.view; render(); }));
+
+  /* ---------- edit dialog ---------- */
+  const dlg = $("#edit"), form = $("#editForm"), del = $("#delBtn");
+  const ef = {}; ["title","note","list","due","prio","kind","start"].forEach(n => ef[n] = form.elements.namedItem(n));
+  function editing(){ return tasks.find(x => x.id === editingId); }
+  function renderSteps(){
+    const t = editing(); if (!t) return;
+    const steps = t.steps || [];
+    $("#steps").replaceChildren(...steps.map((s, i) => h("li", {class: "step" + (s.done ? " ok" : "")},
+      h("label", null,
+        h("input", {type:"checkbox", checked: !!s.done, disabled: readOnly, onchange: e => setStep(i, e.target.checked)}),
+        h("span", null, s.title)),
+      h("button", {type:"button", class:"x", hidden: readOnly, "aria-label": "Șterge etapa " + s.title, onclick: () => removeStep(i)}, "×"))));
+    $("#manualBox").hidden = steps.length > 0;
+    $("#pManual").value = String(+t.progress || 0);
+    $("#pPct").textContent = progress(t) + "%";
+  }
+  function setSteps(steps){ const t = editing(); if (!t) return; patchTask(t.id, {steps, kind: "project"}); renderSteps(); }
+  function setStep(i, done){ const t = editing(); if (!t) return; setSteps((t.steps || []).map((s, j) => j === i ? Object.assign({}, s, {done}) : s)); }
+  function removeStep(i){ const t = editing(); if (!t) return; setSteps((t.steps || []).filter((s, j) => j !== i)); }
+  function addStep(){
+    const inp = $("#stepNew"), title = inp.value.trim(), t = editing();
+    if (!title || !t || readOnly) return;
+    setSteps([...(t.steps || []), {id: newId(), title, done: false}]);
+    inp.value = ""; inp.focus();
+  }
+  $("#stepAdd").addEventListener("click", addStep);
+  $("#pManual").addEventListener("input", e => { $("#pPct").textContent = e.target.value + "%"; });
+  $("#pManual").addEventListener("change", e => { const t = editing(); if (t) patchTask(t.id, {progress: +e.target.value, kind: "project"}); });
+  ef.kind.addEventListener("change", () => { $("#projBox").hidden = ef.kind.value !== "project"; renderSteps(); });
+  form.addEventListener("keydown", e => {
+    if (e.key !== "Enter" || e.target.tagName === "TEXTAREA" || e.target.tagName === "BUTTON") return;
+    e.preventDefault();
+    if (e.target.id === "stepNew") addStep(); else form.requestSubmit($("#saveBtn"));
+  });
+  function openEdit(id){
+    const t = tasks.find(x => x.id === id); if (!t) return;
+    editingId = id;
+    ef.title.value = t.title; ef.note.value = t.note || ""; ef.list.value = t.list || "";
+    ef.due.value = t.due || ""; ef.prio.value = String(t.prio || 0);
+    ef.kind.value = t.kind === "project" ? "project" : "task";
+    ef.start.value = t.start || ymd(new Date(t.created || Date.now()));
+    $("#projBox").hidden = ef.kind.value !== "project";
+    $("#stepNew").value = "";
+    renderSteps();
+    form.querySelectorAll("input,textarea,select").forEach(i => i.disabled = readOnly);
+    del.hidden = readOnly; del.classList.remove("armed"); del.textContent = "Șterge";
+    $("#doneBtn").textContent = t.done ? "Redeschide" : "Realizat"; $("#doneBtn").hidden = readOnly;
+    dlg.returnValue = "";
+    dlg.showModal();
+  }
+  dlg.addEventListener("close", () => {
+    const rv = dlg.returnValue;
+    if ((rv === "save" || rv === "done") && editingId && !readOnly){
+      const t = tasks.find(x => x.id === editingId);
+      const patch = {title: ef.title.value.trim() || (t && t.title) || "", note: ef.note.value.trim(),
+        list: ef.list.value.trim(), due: ef.due.value || "", prio: +ef.prio.value,
+        kind: ef.kind.value, start: ef.kind.value === "project" ? (ef.start.value || "") : (t && t.start) || ""};
+      if (t && !t.kind && patch.kind === "task") delete patch.kind;
+      if (rv === "done" && t){
+        Object.assign(patch, t.done ? {done:false, doneAt:null} : {done:true, doneAt:Date.now()});
+        if (!t.done) toast("Realizat: " + patch.title);
+      }
+      if (t && Object.keys(patch).some(k => (t[k] ?? "") !== patch[k])) patchTask(editingId, patch);
+    }
+    editingId = null;
+  });
+  del.addEventListener("click", () => {
+    if (!del.classList.contains("armed")){ del.classList.add("armed"); del.textContent = "Confirmă ștergerea"; return; }
+    const id = editingId; dlg.close("deleted"); if (id) removeTask(id);
+  });
+
+  $("#doneBtn").addEventListener("click", () => dlg.close("done"));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+
+  /* ---------- start ---------- */
+  /* ---------- settings ---------- */
+  const setDlg = $("#settings"), setForm = $("#setForm");
+  const sf = {}; ["owner","repo","branch","path","token"].forEach(n => sf[n] = setForm.elements.namedItem(n));
+  const setMsg = (text, cls) => { const m = $("#setMsg"); m.textContent = text; m.className = "hint" + (cls ? " " + cls : ""); };
+  function formCfg(){
+    return {owner: sf.owner.value.trim(), repo: sf.repo.value.trim(), branch: sf.branch.value.trim() || "main",
+      path: sf.path.value.trim().replace(/^\/+/, "") || "sarcini.json", token: sf.token.value.trim() || (cfg && cfg.token) || ""};
+  }
+  function openSettings(){
+    sf.owner.value = cfg ? cfg.owner : ""; sf.repo.value = cfg ? cfg.repo : "sarcini-date";
+    sf.branch.value = cfg ? cfg.branch : "main"; sf.path.value = cfg ? cfg.path : "sarcini.json";
+    sf.token.value = ""; sf.token.placeholder = cfg && cfg.token ? "salvat; lasă gol ca să-l păstrezi" : "github_pat_…";
+    $("#unlinkBtn").hidden = !cfg;
+    setMsg(cfg ? "Conectat la " + cfg.owner + "/" + cfg.repo + "." : "Completează datele și apasă Testează, apoi Salvează.");
+    setDlg.returnValue = ""; setDlg.showModal();
+  }
+  $("#setBtn").addEventListener("click", openSettings);
+  $("#testBtn").addEventListener("click", async () => {
+    const c = formCfg();
+    if (!c.owner || !c.repo || !c.token){ setMsg("Completează utilizatorul, repo-ul și tokenul.", "err"); return; }
+    setMsg("Verific…");
+    try {
+      const r = await fetch(repoUrl(c), {headers: ghHeaders(c), cache: "no-store"});
+      if (!r.ok) throw await errOf(r);
+      const repo = await r.json();
+      const f = await ghGet(c);
+      const parts = ["Conexiune reușită."];
+      parts.push(repo.private ? "Repo-ul e privat." : "Atenție: repo-ul e PUBLIC, oricine îți poate vedea sarcinile.");
+      parts.push(f.exists ? "Fișierul există și are " + nr(f.data.tasks.length, "sarcină", "sarcini") + "." : "Fișierul " + c.path + " va fi creat la prima salvare.");
+      setMsg(parts.join(" "), repo.private ? "ok" : "err");
+    } catch(e){ setMsg(ghMessage(e), "err"); }
+  });
+  setDlg.addEventListener("close", () => {
+    if (setDlg.returnValue !== "save") return;
+    const c = formCfg();
+    if (!c.owner || !c.repo || !c.token){ toast("Setările nu s-au salvat: lipsește utilizatorul, repo-ul sau tokenul."); return; }
+    const changedTarget = !cfg || cfg.owner !== c.owner || cfg.repo !== c.repo || cfg.branch !== c.branch || cfg.path !== c.path;
+    cfg = c; writeLS(LS_CFG, cfg); mode = "sync";
+    if (changedTarget){ dirty = true; saveState(); }
+    toast("Setări salvate. Sincronizez…");
+    sync();
+  });
+  $("#unlinkBtn").addEventListener("click", () => {
+    if (!$("#unlinkBtn").classList.contains("armed")){ $("#unlinkBtn").classList.add("armed"); $("#unlinkBtn").textContent = "Confirmă"; return; }
+    delLS(LS_CFG); cfg = null; mode = "local";
+    $("#unlinkBtn").classList.remove("armed"); $("#unlinkBtn").textContent = "Deconectează";
+    setDlg.close("unlink");
+    setStatus("Nesincronizat: sarcinile rămân doar în acest browser.", "warn");
+    toast("Tokenul a fost șters de pe acest dispozitiv.");
+  });
+  $("#exportBtn").addEventListener("click", () => {
+    const t = $("#ioText");
+    t.value = JSON.stringify({app: "de-facut", version: 1, exported: new Date().toISOString(), tasks, tomb}, null, 1);
+    t.focus(); t.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(() => setMsg("Exportul a fost copiat în clipboard.", "ok"), () => {});
+  });
+  $("#ioFile").addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    $("#ioText").value = await f.text(); e.target.value = "";
+  });
+  $("#importBtn").addEventListener("click", () => {
+    let data;
+    try { data = JSON.parse($("#ioText").value); } catch(e){ setMsg("Textul nu e JSON valid.", "err"); return; }
+    const list = Array.isArray(data) ? data : (data && Array.isArray(data.tasks) ? data.tasks : null);
+    if (!list){ setMsg("Nu am găsit o listă de sarcini în text.", "err"); return; }
+    const now = Date.now();
+    const clean = list.filter(t => t && typeof t.title === "string" && t.title.trim()).map(t => {
+      const o = Object.assign({}, t);
+      if (!o.id) o.id = newId();
+      o.updated = Math.max(+o.updated || 0, now);
+      if (!o.created) o.created = now;
+      return o;
+    });
+    if (!clean.length){ setMsg("Nu am găsit sarcini de importat.", "err"); return; }
+    clean.forEach(t => { delete tomb[t.id]; });
+    const m = merge({tasks, tomb}, {tasks: clean, tomb: {}});
+    tasks = m.tasks; tomb = m.tomb; touch();
+    setMsg("Am importat " + nr(clean.length, "sarcină", "sarcini") + ".", "ok");
+    $("#ioText").value = "";
+  });
+
+  /* ---------- floating window (Document Picture-in-Picture) ---------- */
+  const app = document.getElementById("app"), pipBtn = document.getElementById("pipBtn");
+  let pipWin = null;
+  if ("documentPictureInPicture" in window) pipBtn.hidden = false;
+  function returnFromPip(){
+    DOC = document;
+    document.body.append(app);
+    document.getElementById("pipNote").hidden = true;
+    pipBtn.textContent = "Fereastră plutitoare";
+    pipWin = null; render();
+  }
+  pipBtn.addEventListener("click", async () => {
+    if (pipWin){ pipWin.close(); return; }
+    try {
+      const w = await window.documentPictureInPicture.requestWindow({width: 420, height: 680});
+      document.querySelectorAll('link[rel="stylesheet"], style').forEach(n => w.document.head.append(n.cloneNode(true)));
+      const meta = w.document.createElement("meta"); meta.name = "viewport"; meta.content = "width=device-width, initial-scale=1";
+      w.document.head.append(meta);
+      w.document.documentElement.lang = "ro";
+      w.document.title = "De făcut";
+      w.document.body.append(app);
+      DOC = w.document; pipWin = w;
+      document.getElementById("pipNote").hidden = false;
+      pipBtn.textContent = "Închide fereastra";
+      w.addEventListener("pagehide", returnFromPip, {once: true});
+      render();
+    } catch(e){ toast("Fereastra plutitoare nu a putut fi deschisă în acest browser."); }
+  });
+  document.getElementById("pipBack").addEventListener("click", () => { if (pipWin) pipWin.close(); });
+
+  /* ---------- start ---------- */
+  loadState();
+  render();
+  if (cfg && cfg.token){ mode = "sync"; sync(); }
+  else {
+    mode = "local";
+    setStatus("Nesincronizat: deschide Setări ca să conectezi GitHub.", "warn");
+    if (!tasks.length) setTimeout(openSettings, 300);
+  }
+  const visible = () => !document.hidden || !!pipWin;
+  setInterval(() => { if (mode === "sync" && visible() && Date.now() - lastSync > 55000) sync(); }, 60000);
+  window.addEventListener("online", () => scheduleSync(0));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && mode === "sync" && Date.now() - lastSync > 10000) sync(); });
+
+})();
+</script>
+</body>
+</html>
