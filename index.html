@@ -50,21 +50,21 @@ h1{font-size:2.1rem;line-height:1.1;font-weight:700;letter-spacing:-.02em;margin
 
 .add{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:18px}
 .add-main{display:flex;gap:8px}
-.add-main input{flex:1;min-width:0;border:0;background:transparent;font-size:1.05rem;padding:8px 4px}
+.add-main input{flex:1;min-width:0;border:0;background:transparent;font-size:1rem;padding:.3em .25em}
 .add-main input:focus-visible{outline:none}
 .add:focus-within{border-color:var(--accent)}
-.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:8px 16px;font-weight:600;cursor:pointer}
+.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:.35em .85em;font-size:.88rem;font-weight:600;cursor:pointer}
 .opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);align-items:end}
 .field{display:flex;flex-direction:column;gap:2px;font-size:.78rem;color:var(--muted)}
-.field input,.field select,.field textarea{font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px}
+.field input,.field select,.field textarea{font-size:.88rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:.25em .45em;min-height:2em}
 .field.list input{width:9.5rem}
 .quick{display:flex;gap:4px}
-.chip{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:.9rem;cursor:pointer;min-height:36px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:.25em .6em;font-size:.82rem;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 
 [hidden]{display:none!important}
 .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:10px}
-.tabs button{flex:1 0 auto;border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:500;cursor:pointer;color:var(--muted);font-size:.94rem}
+.tabs button{flex:1 0 auto;border:0;background:transparent;border-radius:7px;padding:.3em .55em;font-weight:500;cursor:pointer;color:var(--muted);font-size:.86rem}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 .tabs .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:4px;font-weight:500}
 .lists{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
@@ -80,15 +80,15 @@ ul{list-style:none;margin:0;padding:0}
 .task.c-amb{border-left-color:var(--mid);background:color-mix(in srgb,var(--mid) 15%,var(--surface))}
 .task.c-yel{border-left-color:var(--yel);background:color-mix(in srgb,var(--yel) 14%,var(--surface))}
 .task.c-blu{border-left-color:var(--blu);background:color-mix(in srgb,var(--blu) 12%,var(--surface))}
-.done-btn{flex:none;align-self:center;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:8px;padding:5px 10px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;min-height:32px}
-.done-btn svg{width:14px;height:14px;flex:none}
+.done-btn{flex:none;align-self:center;display:inline-grid;place-items:center;width:1.55rem;height:1.55rem;padding:0;border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:50%;cursor:pointer}
+.done-btn svg{width:.8rem;height:.8rem}
 .done-btn:hover{background:var(--accent);color:var(--accent-ink)}
 .task.done .done-btn{border-color:var(--line);color:var(--muted);font-weight:500}
 .task.done .done-btn:hover{background:var(--bg);color:var(--ink)}
 .actions{flex-wrap:wrap}
 .colorbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 4px;font-size:.82rem;color:var(--muted)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;background:transparent;padding:4px 10px;cursor:pointer;color:var(--muted);font-size:.82rem}
+.seg button{border:0;background:transparent;padding:.2em .6em;cursor:pointer;color:var(--muted);font-size:.82rem}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:4px 10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
@@ -128,13 +128,13 @@ ul{list-style:none;margin:0;padding:0}
 .step.ok span{text-decoration:line-through;color:var(--muted)}
 .step .x{border:0;background:transparent;color:var(--muted);font-size:1.25rem;line-height:1;cursor:pointer;padding:2px 6px}
 .step-add{display:flex;gap:8px}
-.step-add input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px}
+.step-add input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:.25em .45em;min-height:2em}
 #pManual{width:100%;accent-color:var(--accent)}
 @media (max-width:380px){.tabs .n{display:none}}
 .footer-actions{display:flex;justify-content:flex-end;margin-top:12px}
-.danger{background:transparent;border:1px solid var(--hi);color:var(--hi);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:500}
+.danger{background:transparent;border:1px solid var(--hi);color:var(--hi);border-radius:8px;padding:.35em .8em;font-size:.86rem;cursor:pointer;font-weight:500}
 .danger.armed{background:var(--hi);color:var(--surface)}
-.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:8px;padding:.35em .8em;font-size:.86rem;cursor:pointer}
 
 dialog{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--surface);color:var(--ink);width:min(520px,calc(100% - 24px));max-height:calc(100% - 24px)}
 dialog::backdrop{background:rgba(10,16,22,.45)}
@@ -157,7 +157,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 }
 .hrow{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
 .tools{display:flex;gap:6px;flex-wrap:wrap}
-.sm{padding:5px 10px;font-size:.85rem;border-radius:8px;min-height:32px}
+.sm{padding:.2em .55em;font-size:.78rem;border-radius:7px}
 .hint{font-size:.85rem;color:var(--muted);margin:0}
 .hint.err{color:var(--hi)}
 .hint.ok{color:var(--accent)}
@@ -190,6 +190,8 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 #app.mini #today,#app.mini #status,#app.mini .fsz,#app.mini #setBtn{display:none}
 #app.mini h1{font-size:1.15rem}
 #app.mini .summary{font-size:.88rem}
+.task{padding:.5em .6em .5em .5em}
+@media (pointer:coarse){.done-btn{width:2rem;height:2rem}.done-btn svg{width:1rem;height:1rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -611,7 +613,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     btn.innerHTML = t.done
       ? '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h7a3.5 3.5 0 010 7H6"/><path d="M5.5 2.5L3 5l2.5 2.5"/></svg>'
       : '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
-    btn.append(t.done ? "Redeschide" : "Realizat");
+    btn.title = t.done ? "Redeschide" : "Realizat";
     return h("li", {class: "task" + colorClass(t, today) + (t.done ? " done" : "")},
       h("button", {class:"body", type:"button", onclick: () => openEdit(t.id)},
         h("span", {class:"title"}, t.title),
