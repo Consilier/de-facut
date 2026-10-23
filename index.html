@@ -32,7 +32,8 @@
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
-body{font:16px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+html{font-size:15px}
+body{font:1rem/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto;padding:20px 16px 48px}
@@ -178,6 +179,17 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 #alarm strong{display:block;font-size:1.05rem}
 #alarm span{font-size:.9rem;opacity:.85}
 #alarm button{background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:8px 14px;font-weight:600;cursor:pointer}
+.seg.fsz button{padding:3px 9px;line-height:1.2;color:var(--ink)}
+.seg.fsz button[data-fs="s"]{font-size:.72rem}
+.seg.fsz button[data-fs="m"]{font-size:.9rem}
+.seg.fsz button[data-fs="l"]{font-size:1.08rem}
+.seg.fsz button[aria-pressed="true"]{color:var(--bg)}
+#app.mini .wrap{padding-top:8px;padding-bottom:8px}
+#app.mini .wrap > :not(header){display:none!important}
+#app.mini header{margin:0}
+#app.mini #today,#app.mini #status,#app.mini .fsz,#app.mini #setBtn{display:none}
+#app.mini h1{font-size:1.15rem}
+#app.mini .summary{font-size:.88rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -191,7 +203,9 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
       <h1>De făcut</h1>
       <div class="tools">
         <button type="button" class="ghost sm" id="pipBtn" hidden>Fereastră plutitoare</button>
+        <span class="seg fsz" role="group" aria-label="Mărimea scrisului"><button type="button" data-fs="s" aria-label="Scris mic" title="Scris mic">A</button><button type="button" data-fs="m" aria-label="Scris mediu" title="Scris mediu">A</button><button type="button" data-fs="l" aria-label="Scris mare" title="Scris mare">A</button></span>
         <button type="button" class="ghost sm" id="setBtn">Setări</button>
+        <button type="button" class="ghost sm" id="miniBtn" aria-expanded="true">Restrânge</button>
       </div>
     </div>
     <p class="summary" id="summary"></p>
@@ -1097,14 +1111,14 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   pipBtn.addEventListener("click", async () => {
     if (pipWin){ pipWin.close(); return; }
     try {
-      const w = await window.documentPictureInPicture.requestWindow({width: 420, height: 680});
+      const w = await window.documentPictureInPicture.requestWindow({width: 420, height: mini ? 150 : 680});
       document.querySelectorAll('link[rel="stylesheet"], style').forEach(n => w.document.head.append(n.cloneNode(true)));
       const meta = w.document.createElement("meta"); meta.name = "viewport"; meta.content = "width=device-width, initial-scale=1";
       w.document.head.append(meta);
       w.document.documentElement.lang = "ro";
       w.document.title = "De făcut";
       w.document.body.append(app);
-      DOC = w.document; pipWin = w;
+      DOC = w.document; pipWin = w; applyFont(); applyMini();
       document.getElementById("pipNote").hidden = false;
       pipBtn.textContent = "Închide fereastra";
       w.addEventListener("pagehide", returnFromPip, {once: true});
@@ -1112,6 +1126,35 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     } catch(e){ toast("Fereastra plutitoare nu a putut fi deschisă în acest browser."); }
   });
   document.getElementById("pipBack").addEventListener("click", () => { if (pipWin) pipWin.close(); });
+
+  /* ---------- font size & minimize ---------- */
+  const FS = {s: "13px", m: "15px", l: "17px"};
+  let fontSize = readLS("sarcini:font");
+  if (!FS[fontSize]) fontSize = (window.matchMedia && matchMedia("(pointer: fine)").matches) ? "s" : "m";
+  function applyFont(){
+    [document, pipWin && pipWin.document].forEach(dc => { if (dc) dc.documentElement.style.fontSize = FS[fontSize]; });
+    DOC.querySelectorAll(".fsz button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.fs === fontSize)));
+  }
+  document.querySelectorAll(".fsz button").forEach(b => b.addEventListener("click", () => {
+    fontSize = b.dataset.fs; writeLS("sarcini:font", fontSize); applyFont();
+  }));
+  let mini = readLS("sarcini:mini") === true, fullH = null;
+  function applyMini(){
+    app.classList.toggle("mini", mini);
+    const b = $("#miniBtn"); b.textContent = mini ? "Extinde" : "Restrânge"; b.setAttribute("aria-expanded", String(!mini));
+  }
+  $("#miniBtn").addEventListener("click", () => {
+    mini = !mini; writeLS("sarcini:mini", mini); applyMini();
+    const win = pipWin || window;
+    try {
+      if (mini){
+        fullH = win.outerHeight;
+        const chrome = Math.max(0, win.outerHeight - win.innerHeight);
+        win.resizeTo(win.outerWidth, Math.round($("header").getBoundingClientRect().height + 28 + chrome));
+      } else if (fullH) win.resizeTo(win.outerWidth, Math.max(fullH, 400));
+    } catch(e){}
+  });
+  applyFont(); applyMini();
 
   /* ---------- start ---------- */
   loadState();
