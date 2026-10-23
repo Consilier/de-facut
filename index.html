@@ -61,8 +61,9 @@ h1{font-size:2.1rem;line-height:1.1;font-weight:700;letter-spacing:-.02em;margin
 .chip{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:.9rem;cursor:pointer;min-height:36px}
 .chip[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 
-.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:10px}
-.tabs button{flex:1;min-width:0;border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:500;cursor:pointer;color:var(--muted);font-size:.94rem}
+[hidden]{display:none!important}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:10px}
+.tabs button{flex:1 0 auto;border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:500;cursor:pointer;color:var(--muted);font-size:.94rem}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 .tabs .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:4px;font-weight:500}
 .lists{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
@@ -165,6 +166,18 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 .filebtn{display:inline-flex;align-items:center;cursor:pointer}
 #pipNote{max-width:520px;margin:15vh auto 0;padding:24px;text-align:center;color:var(--muted)}
 #pipNote p{margin:0 0 14px}
+.task.meet .time{flex:none;min-width:3.3em;font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums;color:var(--accent);padding-top:1px}
+.task.c-now{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.task.past{opacity:.62}
+.meet-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0 4px}
+.past-box summary{cursor:pointer;color:var(--muted);margin:20px 4px 8px;font-weight:600;font-size:.88rem}
+.row3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px}
+@media (max-width:440px){.row3{grid-template-columns:1fr 1fr}.row3 .field:first-child{grid-column:1/-1}}
+#alarm{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:50;width:min(460px,calc(100% - 24px));background:var(--ink);color:var(--bg);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#alarm div{flex:1;min-width:0}
+#alarm strong{display:block;font-size:1.05rem}
+#alarm span{font-size:.9rem;opacity:.85}
+#alarm button{background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:8px 14px;font-weight:600;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -210,6 +223,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   <div class="tabs" role="tablist">
     <button role="tab" data-view="open" aria-selected="true">De făcut<span class="n" id="nOpen"></span></button>
     <button role="tab" data-view="today" aria-selected="false">Azi<span class="n" id="nToday"></span></button>
+    <button role="tab" data-view="meet" aria-selected="false">Întâlniri<span class="n" id="nMeet"></span></button>
     <button role="tab" data-view="projects" aria-selected="false">Proiecte<span class="n" id="nProj"></span></button>
     <button role="tab" data-view="done" aria-selected="false">Realizate<span class="n" id="nDone"></span></button>
   </div>
@@ -287,6 +301,39 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     </div>
   </form>
 </dialog>
+<dialog id="meet">
+  <form method="dialog" id="meetForm" autocomplete="off">
+    <h2 id="meetH">Întâlnire nouă</h2>
+    <label class="field"><span>Titlu</span><input name="title" required maxlength="300" placeholder="ex. Ședința CAU"></label>
+    <div class="row3">
+      <label class="field"><span>Data</span><input name="date" type="date" required></label>
+      <label class="field"><span>Ora</span><input name="time" type="time" required step="300"></label>
+      <label class="field"><span>Durata</span><select name="dur">
+        <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option>
+        <option value="90">1 h 30 min</option><option value="120">2 h</option><option value="180">3 h</option><option value="240">4 h</option><option value="480">8 h</option>
+      </select></label>
+    </div>
+    <label class="field"><span>Loc sau link</span><input name="place" maxlength="300" placeholder="ex. Sala de ședințe, et. 2"></label>
+    <label class="field"><span>Notă (ordine de zi, participanți)</span><textarea name="note" rows="3" maxlength="4000"></textarea></label>
+    <label class="field"><span>Reminder</span><select name="remind">
+      <option value="-1">Fără reminder</option><option value="0">La ora începerii</option><option value="5">Cu 5 min înainte</option>
+      <option value="10">Cu 10 min înainte</option><option value="15">Cu 15 min înainte</option><option value="30">Cu 30 min înainte</option>
+      <option value="60">Cu o oră înainte</option><option value="120">Cu 2 ore înainte</option><option value="1440">Cu o zi înainte</option>
+    </select></label>
+    <div class="actions">
+      <span class="hint">Adaugă și în calendar:</span>
+      <button type="button" class="ghost sm" id="gcalBtn">Google Calendar</button>
+      <button type="button" class="ghost sm" id="icsBtn">Outlook (.ics)</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="danger" id="mDel">Șterge</button>
+      <span class="sp"></span>
+      <button value="cancel" class="ghost" formnovalidate>Renunță</button>
+      <button value="save" class="primary" id="mSave">Salvează</button>
+    </div>
+  </form>
+</dialog>
+<div id="alarm" role="alert" hidden><div><strong></strong><span></span></div><button type="button" id="alarmOk">Am văzut</button></div>
 <div id="toast" role="status" aria-live="polite"></div>
 </div>
 
@@ -568,30 +615,36 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   function render(){
     const now = new Date(), today = ymd(now), tomorrow = ymd(addDays(now, 1));
     $("#today").textContent = fmtLong.format(now);
+    const items = tasks.filter(t => t.kind !== "meeting"), meets = tasks.filter(t => t.kind === "meeting");
+    const meetToday = meets.filter(m => m.date === today).sort(byStart);
+    const meetLeft = meetToday.filter(m => meetEnd(m) >= now);
 
-    const lists = [...new Set(tasks.map(t => t.list).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ro"));
+    const lists = [...new Set(items.map(t => t.list).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ro"));
     if (activeList && !lists.includes(activeList)) activeList = "";
     $("#listNames").replaceChildren(...lists.map(l => h("option", {value: l})));
 
     const inList = t => !activeList || t.list === activeList;
-    const open = tasks.filter(t => !t.done && inList(t)).sort(sortOpen);
-    const done = tasks.filter(t => t.done && inList(t)).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+    const open = items.filter(t => !t.done && inList(t)).sort(sortOpen);
+    const done = items.filter(t => t.done && inList(t)).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
     const late = open.filter(t => t.due && t.due < today);
     const forToday = open.filter(t => t.due === today);
 
-    const allOpen = tasks.filter(t => !t.done);
+    const allOpen = items.filter(t => !t.done);
     const allLate = allOpen.filter(t => t.due && t.due < today).length;
     const allToday = allOpen.filter(t => t.due === today).length;
     const sum = $("#summary"); sum.replaceChildren();
-    if (!allOpen.length) sum.textContent = "Nimic deschis. Liber.";
+    if (!allOpen.length) sum.append(meetLeft.length ? "Nicio sarcină deschisă" : "Nimic deschis. Liber.");
     else {
       sum.append(nr(allOpen.length, "sarcină deschisă", "sarcini deschise"));
       if (allToday) sum.append(", " + allToday + " pentru azi");
       if (allLate) { sum.append(", "); sum.append(h("span", {class:"late"}, nr(allLate, "întârziată", "întârziate"))); }
     }
+    if (meetLeft.length) sum.append(", " + nr(meetLeft.length, "întâlnire", "întâlniri") + " azi, următoarea la " + meetLeft[0].time);
 
     $("#nOpen").textContent = open.length || "";
-    $("#nToday").textContent = (late.length + forToday.length) || "";
+    $("#nToday").textContent = (late.length + forToday.length + meetLeft.length) || "";
+    $("#nMeet").textContent = meets.filter(m => meetEnd(m) >= now).length || "";
+    $("#add").hidden = $("#lists").hidden = $("#colorbar").hidden = view === "meet";
     $("#nDone").textContent = done.length || "";
     const projects = open.filter(t => t.kind === "project");
     $("#nProj").textContent = projects.length || "";
@@ -630,8 +683,11 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     } else if (view === "projects"){
       if (!projects.length) { out.append(h("p", {class:"empty"}, "Niciun proiect în lucru" + scope + ". Apasă Proiect de durată când adaugi o sarcină nouă.")); return; }
       out.append(...[group("În lucru", projects, today)].flat().filter(Boolean));
+    } else if (view === "meet"){
+      renderMeetings(out, meets, now, today, tomorrow);
     } else if (view === "today"){
-      if (!late.length && !forToday.length) { out.append(h("p", {class:"empty"}, "Nimic programat pentru azi" + scope + ".")); return; }
+      if (meetToday.length) out.append(h("h3", null, "Întâlniri azi (" + meetToday.length + ")"), h("ul", null, meetToday.map(m => meetRow(m, now))));
+      if (!late.length && !forToday.length) { out.append(h("p", {class:"empty"}, "Nicio sarcină pentru azi" + scope + ".")); return; }
       out.append(...[group("Întârziate", late, today, true), group("Azi", forToday, today)].flat().filter(Boolean));
     } else {
       if (!done.length) { out.append(h("p", {class:"empty"}, "Nicio sarcină realizată încă" + scope + ".")); return; }
@@ -761,6 +817,191 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 
   /* ---------- start ---------- */
+  /* ---------- meetings ---------- */
+  const LS_NOTIF = "sarcini:notified";
+  let notified = readLS(LS_NOTIF) || {};
+  const hm = d => pad(d.getHours()) + ":" + pad(d.getMinutes());
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  function meetStart(m){ const [y, mo, d] = m.date.split("-").map(Number); const [hh, mm] = (m.time || "00:00").split(":").map(Number); return new Date(y, mo - 1, d, hh, mm); }
+  function meetEnd(m){ return new Date(meetStart(m).getTime() + (+m.dur || 60) * 60000); }
+  const byStart = (a, b) => meetStart(a) - meetStart(b);
+  function remindLabel(n){
+    if (n === 0) return "la început";
+    if (n === 60) return "cu o oră înainte";
+    if (n === 120) return "cu 2 ore înainte";
+    if (n === 1440) return "cu o zi înainte";
+    return "cu " + n + " min înainte";
+  }
+  function durLabel(n){ n = +n || 60; const hh = Math.floor(n / 60), mm = n % 60; return (hh ? hh + " h" : "") + (hh && mm ? " " : "") + (mm ? mm + " min" : ""); }
+
+  function meetRow(m, now){
+    const s = meetStart(m), e = meetEnd(m);
+    const live = now >= s && now <= e, mins = Math.round((s - now) / 60000), soon = !live && mins > 0 && mins <= 60, past = e < now;
+    const meta = h("span", {class:"meta"});
+    if (past) meta.append(h("span", null, fmtShort.format(s)));
+    meta.append(h("span", null, "până la " + hm(e)));
+    if (m.place) meta.append(h("span", null, m.place));
+    if (!past && m.remind >= 0) meta.append(h("span", null, "🔔 " + remindLabel(+m.remind)));
+    if (live) meta.append(h("span", {class:"tag"}, "acum"));
+    else if (soon) meta.append(h("span", {class:"tag"}, "în " + mins + " min"));
+    if (m.note) meta.append(h("span", null, "are notă"));
+    return h("li", {class: "task meet" + (live || soon ? " c-now" : "") + (past ? " past" : "")},
+      h("span", {class:"time"}, m.time || "–"),
+      h("button", {class:"body", type:"button", onclick: () => openMeet(m.id)},
+        h("span", {class:"title"}, m.title), meta));
+  }
+
+  function notifControl(){
+    if (!("Notification" in window)) return h("span", {class:"hint"}, "Notificările nu sunt disponibile aici; pentru telefon folosește Google Calendar.");
+    const p = Notification.permission;
+    if (p === "granted") return h("span", {class:"hint ok"}, "Notificări active pe acest dispozitiv");
+    if (p === "denied") return h("span", {class:"hint err"}, "Notificări blocate din setările browserului");
+    return h("button", {class:"ghost", type:"button", onclick: async () => { try { await Notification.requestPermission(); } catch(e){} render(); }}, "Activează notificările");
+  }
+
+  function renderMeetings(out, meets, now, today, tomorrow){
+    out.append(h("div", {class:"meet-bar"},
+      h("button", {class:"primary", type:"button", onclick: () => openMeet(null)}, "+ Întâlnire nouă"),
+      notifControl()));
+    const up = meets.filter(m => meetEnd(m) >= now).sort(byStart);
+    const past = meets.filter(m => meetEnd(m) < now).sort((a, b) => byStart(b, a));
+    if (!up.length) out.append(h("p", {class:"empty"}, "Nicio întâlnire programată."));
+    const days = new Map();
+    up.forEach(m => { if (!days.has(m.date)) days.set(m.date, []); days.get(m.date).push(m); });
+    for (const [d, list] of days){
+      const label = d === today ? "Azi" : d === tomorrow ? "Mâine" : cap(fmtLong.format(parse(d)));
+      out.append(h("h3", null, label + " (" + list.length + ")"), h("ul", null, list.map(m => meetRow(m, now))));
+    }
+    if (past.length){
+      const btn = h("button", {class:"danger", type:"button"}, "Șterge întâlnirile trecute");
+      btn.addEventListener("click", () => {
+        if (!btn.classList.contains("armed")){ btn.classList.add("armed"); btn.textContent = "Confirmă: șterge " + nr(past.length, "întâlnire", "întâlniri"); return; }
+        removeMany(past.map(m => m.id)); toast("Am șters " + nr(past.length, "întâlnire trecută", "întâlniri trecute") + ".");
+      });
+      out.append(h("details", {class:"past-box"}, h("summary", null, "Trecute (" + past.length + ")"),
+        h("ul", null, past.slice(0, 60).map(m => meetRow(m, now))), h("div", {class:"footer-actions"}, btn)));
+    }
+  }
+
+  /* dialog */
+  const mDlg = $("#meet"), mForm = $("#meetForm");
+  const mf = {}; ["title","date","time","dur","place","note","remind"].forEach(n => mf[n] = mForm.elements.namedItem(n));
+  let meetEditing = null;
+  function openMeet(id){
+    const m = id ? tasks.find(x => x.id === id) : null;
+    meetEditing = m ? m.id : null;
+    const now = new Date(), next = new Date(now); next.setMinutes(now.getMinutes() < 30 ? 30 : 60, 0, 0);
+    $("#meetH").textContent = m ? "Întâlnire" : "Întâlnire nouă";
+    mf.title.value = m ? m.title : "";
+    mf.date.value = m ? m.date : ymd(next);
+    mf.time.value = m ? m.time : hm(next);
+    mf.dur.value = String(m ? (+m.dur || 60) : 60);
+    mf.place.value = m ? (m.place || "") : "";
+    mf.note.value = m ? (m.note || "") : "";
+    mf.remind.value = String(m ? (m.remind ?? -1) : 15);
+    const del = $("#mDel"); del.hidden = !m; del.classList.remove("armed"); del.textContent = "Șterge";
+    mDlg.returnValue = ""; mDlg.showModal();
+    if (!m) mf.title.focus();
+  }
+  function formMeet(){
+    return {title: mf.title.value.trim(), date: mf.date.value, time: mf.time.value, dur: +mf.dur.value,
+      place: mf.place.value.trim(), note: mf.note.value.trim(), remind: +mf.remind.value};
+  }
+  mDlg.addEventListener("close", () => {
+    if (mDlg.returnValue === "save"){
+      const d = formMeet();
+      if (d.title && d.date && d.time){
+        if (meetEditing) patchTask(meetEditing, d);
+        else createTask(Object.assign({id: newId(), kind: "meeting", created: Date.now()}, d));
+        checkReminders();
+      }
+    }
+    meetEditing = null;
+  });
+  mForm.addEventListener("keydown", e => {
+    if (e.key !== "Enter" || e.target.tagName === "TEXTAREA" || e.target.tagName === "BUTTON") return;
+    e.preventDefault(); mForm.requestSubmit($("#mSave"));
+  });
+  $("#mDel").addEventListener("click", () => {
+    const del = $("#mDel");
+    if (!del.classList.contains("armed")){ del.classList.add("armed"); del.textContent = "Confirmă ștergerea"; return; }
+    const id = meetEditing; mDlg.close("deleted"); if (id) removeTask(id);
+  });
+
+  /* calendar export */
+  function needValid(){ if (!mf.title.value.trim() || !mf.date.value || !mf.time.value){ mForm.reportValidity(); return null; } return formMeet(); }
+  function gcalUrl(m){
+    const f = d => d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "T" + pad(d.getHours()) + pad(d.getMinutes()) + "00";
+    const p = new URLSearchParams({action: "TEMPLATE", text: m.title, dates: f(meetStart(m)) + "/" + f(meetEnd(m)),
+      ctz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Bucharest"});
+    if (m.place) p.set("location", m.place);
+    if (m.note) p.set("details", m.note);
+    return "https://calendar.google.com/calendar/render?" + p.toString();
+  }
+  const icsEsc = s => String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  const utc = d => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  function buildIcs(m, uid){
+    const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//De facut//RO", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
+      "UID:" + uid + "@de-facut", "DTSTAMP:" + utc(new Date()), "DTSTART:" + utc(meetStart(m)), "DTEND:" + utc(meetEnd(m)), "SUMMARY:" + icsEsc(m.title)];
+    if (m.place) L.push("LOCATION:" + icsEsc(m.place));
+    if (m.note) L.push("DESCRIPTION:" + icsEsc(m.note));
+    if (m.remind >= 0) L.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEsc(m.title), "TRIGGER:-PT" + m.remind + "M", "END:VALARM");
+    L.push("END:VEVENT", "END:VCALENDAR");
+    return L.join("\r\n") + "\r\n";
+  }
+  $("#gcalBtn").addEventListener("click", () => { const m = needValid(); if (m) window.open(gcalUrl(m), "_blank", "noopener"); });
+  $("#icsBtn").addEventListener("click", () => {
+    const m = needValid(); if (!m) return;
+    const url = URL.createObjectURL(new Blob([buildIcs(m, meetEditing || newId())], {type: "text/calendar;charset=utf-8"}));
+    const a = document.createElement("a"); a.href = url;
+    a.download = (m.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "intalnire") + ".ics";
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+  });
+
+  /* reminders */
+  let audioCtx = null;
+  function unlockAudio(){ try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === "suspended") audioCtx.resume(); } catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, {once: true});
+  function beep(){
+    if (!audioCtx) return;
+    try {
+      [0, 0.3].forEach(t0 => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + t0;
+        o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+        o.start(t); o.stop(t + 0.25);
+      });
+    } catch(e){}
+  }
+  function fireReminder(m){
+    const mins = Math.round((meetStart(m) - Date.now()) / 60000);
+    const when = mins > 0 ? "Începe în " + nr(mins, "minut", "minute") + ", la " + m.time : "Începe acum, la " + m.time;
+    const body = when + (m.place ? ", " + m.place : "");
+    if ("Notification" in window && Notification.permission === "granted"){
+      try { const n = new Notification(m.title, {body, tag: "meet-" + m.id, requireInteraction: true}); n.onclick = () => { window.focus(); n.close(); }; } catch(e){}
+    }
+    const al = $("#alarm");
+    al.querySelector("strong").textContent = m.title;
+    al.querySelector("span").textContent = body;
+    al.hidden = false;
+    beep();
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch(e){}
+  }
+  function checkReminders(){
+    const now = Date.now();
+    for (const m of tasks){
+      if (m.kind !== "meeting" || !(+m.remind >= 0) || !m.date || !m.time) continue;
+      const start = meetStart(m).getTime(), fire = start - m.remind * 60000;
+      const key = m.id + "|" + m.date + "|" + m.time + "|" + m.remind;
+      if (notified[key] || now < fire || now > start + 10 * 60000) continue;
+      notified[key] = now; fireReminder(m);
+    }
+    for (const k of Object.keys(notified)) if (notified[k] < now - 3 * 864e5) delete notified[k];
+    writeLS(LS_NOTIF, notified);
+  }
+  $("#alarmOk").addEventListener("click", () => { $("#alarm").hidden = true; });
+  setInterval(() => { checkReminders(); if ((view === "meet" || view === "today") && !DOC.querySelector("dialog[open]")) render(); }, 30000);
+
   /* ---------- settings ---------- */
   const setDlg = $("#settings"), setForm = $("#setForm");
   const sf = {}; ["owner","repo","branch","path","token"].forEach(n => sf[n] = setForm.elements.namedItem(n));
@@ -875,6 +1116,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   /* ---------- start ---------- */
   loadState();
   render();
+  checkReminders();
   if (cfg && cfg.token){ mode = "sync"; sync(); }
   else {
     mode = "local";
