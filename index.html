@@ -188,6 +188,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 #app.mini .wrap > :not(header){display:none!important}
 #app.mini header{margin:0}
 #app.mini #today,#app.mini #status,#app.mini .fsz,#app.mini #setBtn{display:none}
+#topBtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:600}
 #app.mini h1{font-size:1.15rem}
 #app.mini .summary{font-size:.88rem}
 .task{padding:.5em .6em .5em .5em}
@@ -207,6 +208,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
         <button type="button" class="ghost sm" id="pipBtn" hidden>Fereastră plutitoare</button>
         <span class="seg fsz" role="group" aria-label="Mărimea scrisului"><button type="button" data-fs="s" aria-label="Scris mic" title="Scris mic">A</button><button type="button" data-fs="m" aria-label="Scris mediu" title="Scris mediu">A</button><button type="button" data-fs="l" aria-label="Scris mare" title="Scris mare">A</button></span>
         <button type="button" class="ghost sm" id="setBtn">Setări</button>
+        <button type="button" class="ghost sm" id="topBtn" aria-pressed="false" hidden>📌 Fixează deasupra</button>
         <button type="button" class="ghost sm" id="miniBtn" aria-expanded="true">Restrânge</button>
       </div>
     </div>
@@ -354,14 +356,36 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 </div>
 
 <script>
-(function(){
+(async function(){
   "use strict";
+  /* ---------- runtime: browser or desktop (Neutralinojs) ---------- */
+  const NL = !!(window.Neutralino && window.NL_PORT);
+  const nlStore = {}, nlKey = k => k.replace(/[^a-zA-Z0-9_-]/g, "_");
+  let lastWrite = Promise.resolve();
+  if (NL){
+    try { Neutralino.init(); } catch(e){}
+    try {
+      const keys = await Neutralino.storage.getKeys();
+      for (const k of keys){ try { nlStore[k] = await Neutralino.storage.getData(k); } catch(e){} }
+    } catch(e){}
+  }
+  const store = {
+    get(k){ if (NL) return nlStore[nlKey(k)] ?? null; try { return localStorage.getItem(k); } catch(e){ return null; } },
+    set(k, v){
+      if (NL){ nlStore[nlKey(k)] = v; lastWrite = lastWrite.then(() => Neutralino.storage.setData(nlKey(k), v)).catch(() => {}); return; }
+      try { localStorage.setItem(k, v); } catch(e){}
+    },
+    del(k){
+      if (NL){ delete nlStore[nlKey(k)]; lastWrite = lastWrite.then(() => Neutralino.storage.setData(nlKey(k), null)).catch(() => {}); return; }
+      try { localStorage.removeItem(k); } catch(e){}
+    }
+  };
   let DOC = document;
   const $ = s => DOC.querySelector(s);
   let tasks = [], mode = "local", readOnly = false;
   let view = "open", activeList = "", editingId = null;
   let colorMode = "prio";
-  try { colorMode = localStorage.getItem("de-facut:colors") === "due" ? "due" : "prio"; } catch(e){}
+  colorMode = store.get("de-facut:colors") === "due" ? "due" : "prio";
 
   function h(tag, attrs, ...kids){
     const el = document.createElement(tag);
@@ -409,9 +433,9 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 
   /* ---------- storage: local + GitHub ---------- */
   const LS_STATE = "sarcini:state", LS_CFG = "sarcini:github";
-  function readLS(key){ try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
-  function writeLS(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
-  function delLS(key){ try { localStorage.removeItem(key); } catch(e){} }
+  function readLS(key){ try { const r = store.get(key); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
+  function writeLS(key, val){ store.set(key, JSON.stringify(val)); }
+  function delLS(key){ store.del(key); }
   function newId(){ return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
   let tomb = {}, dirty = false, editVer = 0;
@@ -674,7 +698,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     }
 
     const segBtn = (label, val) => h("button", {type:"button", "aria-pressed": String(colorMode === val),
-      onclick: () => { colorMode = val; try { localStorage.setItem("de-facut:colors", val); } catch(e){} render(); }}, label);
+      onclick: () => { colorMode = val; store.set("de-facut:colors", val); render(); }}, label);
     const leg = colorMode === "prio"
       ? [["var(--hi)", "urgentă"], ["var(--mid)", "importantă"]]
       : [["var(--hi)", "întârziată"], ["var(--mid)", "azi"], ["var(--yel)", "mâine"], ["var(--blu)", "în 7 zile"]];
@@ -868,6 +892,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   }
 
   function notifControl(){
+    if (NL) return h("span", {class:"hint ok"}, "Reminderele apar ca notificări Windows");
     if (!("Notification" in window)) return h("span", {class:"hint"}, "Notificările nu sunt disponibile aici; pentru telefon folosește Google Calendar.");
     const p = Notification.permission;
     if (p === "granted") return h("span", {class:"hint ok"}, "Notificări active pe acest dispozitiv");
@@ -965,9 +990,22 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     L.push("END:VEVENT", "END:VCALENDAR");
     return L.join("\r\n") + "\r\n";
   }
-  $("#gcalBtn").addEventListener("click", () => { const m = needValid(); if (m) window.open(gcalUrl(m), "_blank", "noopener"); });
+  $("#gcalBtn").addEventListener("click", () => { const m = needValid(); if (m) openExternal(gcalUrl(m)); });
+  function openExternal(url){ if (NL) Neutralino.os.open(url).catch(() => toast("Nu am putut deschide browserul.")); else window.open(url, "_blank", "noopener"); }
   $("#icsBtn").addEventListener("click", () => {
     const m = needValid(); if (!m) return;
+    const fname = (m.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "intalnire") + ".ics";
+    if (NL){
+      (async () => {
+        try {
+          const dir = (await Neutralino.os.getPath("temp")).replace(/[\\/]+$/, "");
+          const p = dir + "\\" + fname;
+          await Neutralino.filesystem.writeFile(p, buildIcs(m, meetEditing || newId()));
+          await Neutralino.os.open(p);
+        } catch(e){ toast("Nu am putut deschide fișierul .ics."); }
+      })();
+      return;
+    }
     const url = URL.createObjectURL(new Blob([buildIcs(m, meetEditing || newId())], {type: "text/calendar;charset=utf-8"}));
     const a = document.createElement("a"); a.href = url;
     a.download = (m.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "intalnire") + ".ics";
@@ -993,7 +1031,8 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     const mins = Math.round((meetStart(m) - Date.now()) / 60000);
     const when = mins > 0 ? "Începe în " + nr(mins, "minut", "minute") + ", la " + m.time : "Începe acum, la " + m.time;
     const body = when + (m.place ? ", " + m.place : "");
-    if ("Notification" in window && Notification.permission === "granted"){
+    if (NL) Neutralino.os.showNotification(m.title, body).catch(() => {});
+    else if ("Notification" in window && Notification.permission === "granted"){
       try { const n = new Notification(m.title, {body, tag: "meet-" + m.id, requireInteraction: true}); n.onclick = () => { window.focus(); n.close(); }; } catch(e){}
     }
     const al = $("#alarm");
@@ -1102,7 +1141,20 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
   /* ---------- floating window (Document Picture-in-Picture) ---------- */
   const app = document.getElementById("app"), pipBtn = document.getElementById("pipBtn");
   let pipWin = null;
-  if ("documentPictureInPicture" in window) pipBtn.hidden = false;
+  if ("documentPictureInPicture" in window && !NL) pipBtn.hidden = false;
+  /* desktop: always on top */
+  const topBtn = document.getElementById("topBtn");
+  let onTop = readLS("sarcini:ontop") === true;
+  function applyTop(){
+    topBtn.setAttribute("aria-pressed", String(onTop));
+    topBtn.textContent = onTop ? "📌 Deasupra" : "📌 Fixează deasupra";
+    if (NL) Neutralino.window.setAlwaysOnTop(onTop).catch(() => {});
+  }
+  if (NL){
+    topBtn.hidden = false;
+    topBtn.addEventListener("click", () => { onTop = !onTop; writeLS("sarcini:ontop", onTop); applyTop(); });
+    applyTop();
+  }
   function returnFromPip(){
     DOC = document;
     document.body.append(app);
@@ -1145,8 +1197,21 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     app.classList.toggle("mini", mini);
     const b = $("#miniBtn"); b.textContent = mini ? "Extinde" : "Restrânge"; b.setAttribute("aria-expanded", String(!mini));
   }
-  $("#miniBtn").addEventListener("click", () => {
+  $("#miniBtn").addEventListener("click", async () => {
     mini = !mini; writeLS("sarcini:mini", mini); applyMini();
+    if (NL){
+      try {
+        const sz = await Neutralino.window.getSize();
+        if (mini){
+          writeLS("sarcini:fullH", sz.height);
+          const hh = $("header").getBoundingClientRect().height;
+          await Neutralino.window.setSize({width: sz.width, height: Math.round((hh + 30) * (window.devicePixelRatio || 1) + 45)});
+        } else {
+          await Neutralino.window.setSize({width: sz.width, height: Math.max(+readLS("sarcini:fullH") || 700, 400)});
+        }
+      } catch(e){}
+      return;
+    }
     const win = pipWin || window;
     try {
       if (mini){
@@ -1168,10 +1233,20 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     setStatus("Nesincronizat: deschide Setări ca să conectezi GitHub.", "warn");
     if (!tasks.length) setTimeout(openSettings, 300);
   }
-  const visible = () => !document.hidden || !!pipWin;
+  const visible = () => NL || !document.hidden || !!pipWin;
   setInterval(() => { if (mode === "sync" && visible() && Date.now() - lastSync > 55000) sync(); }, 60000);
   window.addEventListener("online", () => scheduleSync(0));
   document.addEventListener("visibilitychange", () => { if (!document.hidden && mode === "sync" && Date.now() - lastSync > 10000) sync(); });
+  if (NL){
+    Neutralino.events.on("windowClose", async () => {
+      try {
+        const wait = ms => new Promise(r => setTimeout(r, ms));
+        if (dirty && mode === "sync") await Promise.race([sync(), wait(4000)]);
+        await Promise.race([lastWrite, wait(1500)]);
+      } catch(e){}
+      Neutralino.app.exit();
+    });
+  }
 
 })();
 </script>
