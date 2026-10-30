@@ -193,6 +193,15 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
 #app.mini .summary{font-size:.88rem}
 .task{padding:.5em .6em .5em .5em}
 @media (pointer:coarse){.done-btn{width:2rem;height:2rem}.done-btn svg{width:1rem;height:1rem}}
+.combo{position:relative;display:flex;align-items:stretch}
+.combo input{flex:1;min-width:0;padding-right:1.7em!important}
+.field.list .combo input{width:9.5rem}
+.combo-btn{position:absolute;right:1px;top:1px;bottom:1px;width:1.6em;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0;border-radius:0 7px 7px 0}
+.combo-btn:hover{color:var(--accent)}
+.combo-pop{position:absolute;left:0;top:calc(100% + 3px);min-width:100%;max-height:14em;overflow:auto;margin:0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:40}
+.combo-pop li{padding:.3em .6em;border-radius:6px;cursor:pointer;white-space:nowrap;color:var(--ink);font-size:.88rem}
+.combo-pop li.on,.combo-pop li:hover{background:var(--soft);color:var(--accent)}
+.combo-pop li.none{color:var(--muted);cursor:default;white-space:normal;background:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -223,7 +232,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
         <button type="submit" class="primary">Adaugă</button>
       </div>
       <div class="opts">
-        <label class="field list"><span>Listă</span><input id="list" list="listNames" placeholder="ex. CU, CAU" maxlength="40"></label>
+        <label class="field list"><span>Listă</span><input id="list" placeholder="ex. CU, CAU" maxlength="40"></label>
         <label class="field"><span>Termen</span><input id="due" type="date"></label>
         <div class="quick">
           <button type="button" class="chip" data-quick="0" aria-pressed="false">Azi</button>
@@ -256,7 +265,7 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     <label class="field"><span>Titlu</span><input name="title" required maxlength="300"></label>
     <label class="field"><span>Notă</span><textarea name="note" rows="3" maxlength="4000"></textarea></label>
     <div class="row2">
-      <label class="field"><span>Listă</span><input name="list" list="listNames" maxlength="40"></label>
+      <label class="field"><span>Listă</span><input name="list" maxlength="40"></label>
       <label class="field"><span>Termen</span><input name="due" type="date"></label>
     </div>
     <div class="row2">
@@ -1138,6 +1147,47 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     $("#ioText").value = "";
   });
 
+  /* ---------- list picker (replaces datalist, which some webviews do not show) ---------- */
+  function listNames(){ return [...new Set(tasks.filter(t => t.kind !== "meeting").map(t => t.list).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ro")); }
+  function attachCombo(input){
+    const wrap = document.createElement("span"); wrap.className = "combo";
+    input.parentNode.insertBefore(wrap, input); wrap.append(input);
+    input.setAttribute("autocomplete", "off");
+    const btn = h("button", {type:"button", class:"combo-btn", tabindex:"-1", "aria-label":"Alege o listă existentă"}, "▼");
+    const pop = h("ul", {class:"combo-pop", role:"listbox", hidden:true});
+    wrap.append(btn, pop);
+    let active = -1;
+    const opts = () => [...pop.querySelectorAll('li[role="option"]')];
+    function mark(){ opts().forEach((li, i) => li.classList.toggle("on", i === active)); const a = opts()[active]; if (a) a.scrollIntoView({block:"nearest"}); }
+    function show(all){
+      const q = all ? "" : input.value.trim().toLowerCase();
+      const names = listNames().filter(n => !q || n.toLowerCase().includes(q));
+      active = -1;
+      if (!names.length){
+        if (all){ pop.replaceChildren(h("li", {class:"none"}, "Nicio listă încă. Scrie un nume nou.")); pop.hidden = false; }
+        else pop.hidden = true;
+        return;
+      }
+      pop.replaceChildren(...names.map(n => h("li", {role:"option",
+        onmousedown: e => e.preventDefault(), onclick: () => pick(n)}, n)));
+      pop.hidden = false;
+    }
+    function pick(n){ input.value = n; pop.hidden = true; active = -1; }
+    btn.addEventListener("mousedown", e => e.preventDefault());
+    btn.addEventListener("click", () => { if (pop.hidden){ input.focus(); show(true); } else pop.hidden = true; });
+    input.addEventListener("input", () => show(false));
+    input.addEventListener("keydown", e => {
+      const items = opts();
+      if (e.key === "ArrowDown"){ e.preventDefault(); if (pop.hidden) show(true); active = Math.min(active + 1, opts().length - 1); mark(); }
+      else if (e.key === "ArrowUp" && !pop.hidden){ e.preventDefault(); active = Math.max(active - 1, 0); mark(); }
+      else if (e.key === "Enter" && !pop.hidden && active >= 0 && items[active]){ e.preventDefault(); e.stopPropagation(); pick(items[active].textContent); }
+      else if (e.key === "Escape" && !pop.hidden){ e.preventDefault(); e.stopPropagation(); pop.hidden = true; }
+    });
+    input.addEventListener("blur", () => setTimeout(() => { pop.hidden = true; }, 150));
+  }
+  attachCombo(document.getElementById("list"));
+  attachCombo(ef.list);
+
   /* ---------- floating window (Document Picture-in-Picture) ---------- */
   const app = document.getElementById("app"), pipBtn = document.getElementById("pipBtn");
   let pipWin = null;
@@ -1201,13 +1251,17 @@ dialog h3{margin:0;padding:0;color:var(--ink);font-size:1rem}
     mini = !mini; writeLS("sarcini:mini", mini); applyMini();
     if (NL){
       try {
-        const sz = await Neutralino.window.getSize();
+        const sz = await Neutralino.window.getSize(), pos = await Neutralino.window.getPosition();
         if (mini){
           writeLS("sarcini:fullH", sz.height);
           const hh = $("header").getBoundingClientRect().height;
-          await Neutralino.window.setSize({width: sz.width, height: Math.round((hh + 30) * (window.devicePixelRatio || 1) + 45)});
+          const newH = Math.round((hh + 30) * (window.devicePixelRatio || 1) + 45);
+          await Neutralino.window.setSize({width: sz.width, height: newH});
+          await Neutralino.window.move(pos.x, pos.y + Math.max(0, sz.height - newH));
         } else {
-          await Neutralino.window.setSize({width: sz.width, height: Math.max(+readLS("sarcini:fullH") || 700, 400)});
+          const fh = Math.max(+readLS("sarcini:fullH") || 700, 400);
+          await Neutralino.window.move(pos.x, Math.max(0, pos.y - Math.max(0, fh - sz.height)));
+          await Neutralino.window.setSize({width: sz.width, height: fh});
         }
       } catch(e){}
       return;
